@@ -10,7 +10,7 @@ export const renderStatus = (status: string, error?: Error) => {
 };
 
 export const renderVideo = (stream: MediaStream, userId: string, fromCode: string) => {
-  console.log('rendering video', stream, userId, 'from function' ,fromCode);
+  console.debug('rendering video', stream, userId, 'from function' ,fromCode);
 
   const video = document.getElementById(userId) as HTMLVideoElement | null;
 

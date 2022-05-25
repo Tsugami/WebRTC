@@ -10,6 +10,8 @@ import {
 
 const cameraBtn = document.querySelector<HTMLButtonElement>("#open-camera")!;
 const debugBtn = document.querySelector<HTMLButtonElement>("#debug-btn")!;
+const toggleCameraBtn =
+  document.querySelector<HTMLButtonElement>("#toggle-camera")!;
 
 export const users = new Map<string, IUser>();
 export const peers = new Map<string, RTCPeerConnection>();
@@ -48,21 +50,23 @@ socket.on("welcome", (user: IUser, remoteUsers: IUser[]) => {
   renderUsers();
 });
 
-socket.on("web-rtc:candidate", (from: IUser, candidate: RTCIceCandidateInit) => {
-  const peer = peers.get(from.id);
-  if (peer) {
-    peer.addIceCandidate(new RTCIceCandidate(candidate));
-  } else {
-    console.error("not found peer for candidate", from.id);
+socket.on(
+  "web-rtc:candidate",
+  (from: IUser, candidate: RTCIceCandidateInit) => {
+    const peer = peers.get(from.id);
+    if (peer) {
+      peer.addIceCandidate(new RTCIceCandidate(candidate));
+    } else {
+      console.error("not found peer for candidate", from.id);
+    }
   }
-});
+);
 
 socket.on("web-rtc:offer", async (from: IUser, offer) => {
   const peer = initPeerConnection(from.id);
   await peer.setRemoteDescription(offer);
   addLocalTracks(peer);
   createAnswer(from.id, peer);
-  
 });
 
 socket.on("web-rtc:answer", (from: IUser, answer) => {
@@ -95,7 +99,7 @@ const initPeerConnection = (userId: string) => {
   peer.ontrack = (event) => {
     const stream = event.streams[0];
     console.log("Remote track added", stream, userId);
-    renderVideo(stream, userId, 'ontrack');
+    renderVideo(stream, userId, "ontrack");
   };
 
   peer.onconnectionstatechange = () => renderUsers();
@@ -145,12 +149,28 @@ cameraBtn.onclick = async () => {
 
   socket.emit("open_camera", localUser!);
   cameraBtn.disabled = true;
-  renderVideo(localStream, socket!.id, 'onclick-camera-btn');
+  renderVideo(localStream, socket!.id, "onclick-camera-btn");
 };
 
 debugBtn.onclick = () => {
   console.debug("users", users);
   console.debug("peers", peers);
+};
+
+toggleCameraBtn.onclick = () => {
+  const videoTrack = localStream
+    ?.getTracks()
+    .find((track) => track.kind === "video");
+
+  if (!videoTrack) return;
+
+  if (videoTrack.enabled) {
+    videoTrack.enabled = false;
+    toggleCameraBtn.innerHTML = "Show cam";
+  } else {
+    videoTrack.enabled = true;
+    toggleCameraBtn.innerHTML = "Hide cam";
+  }
 };
 
 function addLocalTracks(peer: RTCPeerConnection) {

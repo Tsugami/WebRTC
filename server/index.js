@@ -30,25 +30,28 @@ io.on("connection", (socket) => {
   users.set(socket.id, user);
 
   socket.emit("welcome", user, Array.from(users.values()));
-  socket.broadcast.emit("user-joined", user);
 
   socket.on("disconnect", () => {
     users.delete(socket.id);
     socket.broadcast.emit("user-leaved", socket.id);
   });
 
+  socket.on('open_camera', () => {
+    socket.broadcast.emit("user-joined", user);
+  });
+
   socket.on("web-rtc:candidate", (toId, candidate) => {
-    console.log("%s send candidate tp %s", user.name, users.get(toId).name);
+    console.log("%s send candidate to %s", user.name, users.get(toId).name);
     socket.to(toId).emit("web-rtc:candidate", user, candidate);
   });
 
   socket.on("web-rtc:offer", (toId, offer) => {
-    console.log("%s send a offer tp %s", user.name, users.get(toId).name);
+    console.log("%s send a offer to %s", user.name, users.get(toId).name);
     socket.to(toId).emit("web-rtc:offer", user, offer);
   });
 
   socket.on("web-rtc:answer", (toId, answer) => {
-    console.log("%s send a answer tp %s", user.name, users.get(toId).name);
+    console.log("%s send a answer to %s", user.name, users.get(toId).name);
     socket.to(toId).emit("web-rtc:answer", user, answer);
   });
 });
